@@ -1,7 +1,3 @@
-import tensorflow as tf
-
-tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-
 import pathlib
 from ast import literal_eval
 from pathlib import Path
