@@ -228,6 +228,7 @@ def train(
     training_config_name: Optional[
         str
     ] = user_transaction.select_training_configuration_name(path)
+
     training_msg: str = typer.prompt("Enter training message")
 
     set_up_and_execute_training_routine(
