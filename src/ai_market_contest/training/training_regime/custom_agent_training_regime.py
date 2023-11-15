@@ -59,17 +59,7 @@ class CustomAgentTrainingRegime(TrainingRegime):
             profit: int = self._simulation(agents, env, self_play_agents)
             cumulative_profits.append(profit)
 
-            if self.training_config_reader.print_training():
-                status = "epoch {:2d} \nreward min: {:6.2f}\nreward mean: {:6.2f}\nreward max:  {:6.2f}\nmean length: {:4.2f}\n"
-                typer.echo(
-                    status.format(
-                        epoch + 1,
-                        min(cumulative_profits),
-                        sum(cumulative_profits) / len(cumulative_profits),
-                        max(cumulative_profits),
-                        env.simulation_length,
-                    )
-                )
+            self._display_information_on_current_epoch(epoch, cumulative_profits)
 
         save_new_custom_agent(
             agents[MAIN_AGENT_INDEX],
@@ -152,3 +142,17 @@ class CustomAgentTrainingRegime(TrainingRegime):
         # index can be this way as self play agents always assumed at start of the list
         for index, agent in enumerate(self_play_agents):
             agent.update(rewards[environment.agents[index]], index)
+
+    def _display_information_on_current_epoch(
+        self, epoch: int, cumulative_profits: list[int]
+    ) -> None:
+        if self.training_config_reader.print_training():
+            status = "epoch {:2d} \nreward min: {:6.2f}\nreward mean: {:6.2f}\nreward max:  {:6.2f}\n"
+            typer.echo(
+                status.format(
+                    epoch + 1,
+                    min(cumulative_profits),
+                    sum(cumulative_profits) / len(cumulative_profits),
+                    max(cumulative_profits),
+                )
+            )
