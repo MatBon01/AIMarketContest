@@ -4,10 +4,12 @@ warnings.filterwarnings("ignore")
 import pathlib
 from ast import literal_eval
 from pathlib import Path
+from typing import Optional
 
 import questionary
 import typer
 
+import ai_market_contest.cli.user_transactions.questionary_transactions as user_transaction
 from ai_market_contest.cli.adddemandfunctionsubcommand import create_demand_function
 from ai_market_contest.cli.cli_config import (
     COMMAND_NAME,
@@ -18,6 +20,7 @@ from ai_market_contest.cli.cli_config import (
     TRAINING_CONFIG_EXTENSION,
     TRAINING_CONFIGS_DIR_NAME,
 )
+from ai_market_contest.cli.configs.training_config_reader import TrainingConfigReader
 from ai_market_contest.cli.resetsubcommand import remove_proj_dir
 from ai_market_contest.cli.utils.agent_manipulation_utils import (
     create_custom_agent,
@@ -30,13 +33,9 @@ from ai_market_contest.cli.utils.config_utils import (
     copy_example_evaluation_config_file,
     copy_example_training_config_file,
     get_evaluation_configs,
-    get_training_configs,
 )
 from ai_market_contest.cli.utils.execute_evaluation_routine import (
     execute_evaluation_routine,
-)
-from ai_market_contest.cli.utils.execute_training_routine import (
-    set_up_and_execute_training_routine,
 )
 from ai_market_contest.cli.utils.existing_agent.existing_agent import ExistingAgent
 from ai_market_contest.cli.utils.existing_agent.existing_agent_version import (
@@ -49,6 +48,10 @@ from ai_market_contest.cli.utils.filesystemutils import (
 from ai_market_contest.cli.utils.get_agents import get_agent_names
 from ai_market_contest.cli.utils.project_initialisation_utils import (
     initialise_file_structure,
+)
+from ai_market_contest.training.training_regime.training_regime import TrainingRegime
+from ai_market_contest.training.training_regime.training_regime_factory import (
+    TrainingRegimeFactory,
 )
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -221,26 +224,26 @@ def train(
     """
     Train an agent within a specified environment
     """
-    assert_proj_dir_exists(path)
-
-    chosen_agent_version = get_chosen_agent_version(path, "train")
-
+    chosen_agent_version: Optional[
+        ExistingAgentVersion
+    ] = user_transaction.select_trained_agent(path)
     if chosen_agent_version is None:
         return
 
-    training_configs: list[str] = get_training_configs(path)
-    assert_configs_exist(training_configs)
-    training_config: str = questionary.select(
-        "Choose a training config:", choices=training_configs
-    ).ask()
-    training_msg: str = typer.prompt("Enter training message")
+    training_config: Optional[
+        TrainingConfigReader
+    ] = user_transaction.select_training_configuration(path)
+    if not training_config:
+        return
 
-    set_up_and_execute_training_routine(
-        training_config,
-        path,
-        chosen_agent_version,
-        training_msg,
+    training_msg: str = typer.prompt("Enter training message")
+    if not training_msg:
+        return
+
+    training_regime: TrainingRegime = TrainingRegimeFactory.create_training_regime(
+        training_config, path, chosen_agent_version, training_msg
     )
+    training_regime.execute()
 
 
 @app.command()
