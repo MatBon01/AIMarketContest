@@ -107,7 +107,6 @@ class SimulationConfigReader:
 
     def get_environment(self, agent_name_maker: AgentNameMaker) -> Market:
         return Market(
-            self.get_num_agents(),
             self.demand_function_locator.get_demand_function(
                 self.parsed_config["General"]["demand_function"]
             ),
