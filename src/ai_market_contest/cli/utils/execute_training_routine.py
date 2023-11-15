@@ -4,11 +4,9 @@ import shutil
 
 from ray.rllib.agents.trainer import Trainer
 
-from ai_market_contest.agent import Agent
 from ai_market_contest.cli.cli_config import (  # type: ignore
     TRAINED_AGENTS_DIR_NAME,
     TRAINED_CONFIG_FILENAME,
-    TRAINED_PICKLE_FILENAME,
 )
 from ai_market_contest.cli.configs.agent_config_reader import (
     AgentConfigReader,  # type: ignore
@@ -91,18 +89,6 @@ def create_trained_agent_dir(
     shutil.copy(training_config_path, new_agent_dir / TRAINED_CONFIG_FILENAME)
     return new_agent_dir
 
-
-def save_new_custom_agent(
-    new_agent: Agent,
-    old_agent_version: ExistingAgentVersion,
-    training_msg: str,
-    training_config_path: pathlib.Path,
-):
-    new_agent_dir = create_trained_agent_dir(
-        old_agent_version, training_msg, training_config_path
-    )
-    with open(new_agent_dir / TRAINED_PICKLE_FILENAME, "wb") as pickle_file:
-        new_agent.save(pickle_file)
 
 
 def save_new_rllib_trainer(
