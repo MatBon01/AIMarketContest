@@ -107,10 +107,7 @@ class CustomAgentTrainingRegime(TrainingRegime):
     def _simulation(
         self, agents: list[Agent], environment: Market, self_play_agents: list[Agent]
     ) -> int:
-        current_prices: dict[str, int] = {}
-
-        for agent, agent_name in zip(agents, environment.agents):
-            current_prices[agent_name] = agent.get_initial_price()
+        current_prices: dict[str, int] = self._get_initial_prices()
 
         cumulative_profit = 0
         for _ in range(environment.simulation_length):
@@ -122,3 +119,13 @@ class CustomAgentTrainingRegime(TrainingRegime):
             cumulative_profit += rewards[environment.agents[0]]
 
         return cumulative_profit
+
+    def _get_initial_prices(
+        self, agents: list[Agent], environment: Market
+    ) -> dict[str, int]:
+        current_prices: dict[str, int] = {}
+
+        for agent, agent_name in zip(agents, environment.agents):
+            current_prices[agent_name] = agent.get_initial_price()
+
+        return current_prices
