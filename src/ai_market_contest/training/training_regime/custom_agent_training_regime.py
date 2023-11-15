@@ -110,7 +110,7 @@ class CustomAgentTrainingRegime(TrainingRegime):
     def _simulation(
         self, agents: list[Agent], environment: Market, self_play_agents: list[Agent]
     ) -> int:
-        current_prices: dict[str, int] = self._get_initial_prices()
+        current_prices: dict[str, int] = self._get_initial_prices(agents, environment)
 
         cumulative_profit = 0
         for _ in range(environment.simulation_length):
@@ -140,7 +140,7 @@ class CustomAgentTrainingRegime(TrainingRegime):
     ) -> int:
         current_prices = get_agent_price_dict(agents, environment, current_prices)
         _, rewards, _, _ = environment.step(current_prices)
-        self._teach_learning_agents(self_play_agents)
+        self._teach_self_play_agents(self_play_agents, rewards, environment)
         return rewards[environment.agents[MAIN_AGENT_INDEX]]
 
     def _teach_self_play_agents(
