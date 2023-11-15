@@ -5,6 +5,7 @@ import typer
 from ray.rllib.agents.trainer import Trainer
 
 from ai_market_contest.agent import Agent
+from ai_market_contest.agents.trainer_agent_adapter import TrainerAgentAdapter
 from ai_market_contest.cli.cli_config import DEFAULT_INITIAL_AGENT_PRICE
 from ai_market_contest.cli.configs.agent_config_reader import AgentConfigReader
 from ai_market_contest.cli.configs.training_config_reader import TrainingConfigReader
@@ -42,15 +43,17 @@ class CustomAgentTrainingRegime(TrainingRegime):
         )
         env = self.training_config_reader.get_environment(agent_name_maker)
 
-        self_play_agents = self.training_config_reader.get_self_play_agents(
+        self_play_agents: list[Agent] = self.training_config_reader.get_self_play_agents(
             self.agent_version
         )
-        naive_agents = self.training_config_reader.get_naive_agents()
-        trained_agents = self.training_config_reader.get_trained_agents(
+        naive_agents: list[Agent] = self.training_config_reader.get_naive_agents()
+        trained_agents: list[Union[Agent, Trainer]] = self.training_config_reader.get_trained_agents(
             self.project_dir, env
         )
 
-        agents: list[Union[Agent, Trainer]] = []
+        trained_agents: list[Agent] = list(map(lambda agent: TrainerAgentAdapter.convert_if_trainer(agent, agent_name_maker.get_names()), trained_agents))
+
+        agents: list[Agent] = []
         agents.extend(self_play_agents + naive_agents)
         agents.extend(trained_agents)
 
@@ -60,9 +63,6 @@ class CustomAgentTrainingRegime(TrainingRegime):
             current_prices: dict[str, int] = {}
 
             for agent, agent_name in zip(agents, env.agents):
-                if isinstance(agent, Trainer):
-                    current_prices[agent_name] = DEFAULT_INITIAL_AGENT_PRICE
-                else:
                     current_prices[agent_name] = agent.get_initial_price()
 
             cumulative_profit = 0

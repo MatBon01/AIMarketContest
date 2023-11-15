@@ -1,16 +1,11 @@
 import datetime
 import pathlib
 import shutil
-from typing import Union
 
-import typer
 from ray.rllib.agents.trainer import Trainer
 
 from ai_market_contest.agent import Agent
 from ai_market_contest.cli.cli_config import (  # type: ignore
-    AGENTS_DIR_NAME,
-    DEFAULT_INITIAL_AGENT_PRICE,
-    ENVS_DIR_NAME,
     TRAINED_AGENTS_DIR_NAME,
     TRAINED_CONFIG_FILENAME,
     TRAINED_PICKLE_FILENAME,
@@ -19,9 +14,6 @@ from ai_market_contest.cli.configs.agent_config_reader import (
     AgentConfigReader,  # type: ignore
 )
 from ai_market_contest.cli.configs.training_config_reader import TrainingConfigReader
-from ai_market_contest.cli.utils.agent_locator import AgentLocator
-from ai_market_contest.cli.utils.config_utils import get_training_config_path
-from ai_market_contest.cli.utils.demand_function_locator import DemandFunctionLocator
 from ai_market_contest.cli.utils.existing_agent.existing_agent_version import (
     ExistingAgentVersion,
 )
@@ -30,7 +22,6 @@ from ai_market_contest.cli.utils.get_agents import (  # type: ignore
 )
 from ai_market_contest.cli.utils.hashing import get_agent_hash  # type: ignore
 from ai_market_contest.cli.utils.processmetafile import write_custom_agent_meta_file
-from ai_market_contest.cli.utils.training import get_agent_price_dict
 from ai_market_contest.training.sequential_agent_name_maker import (
     SequentialAgentNameMaker,  # type: ignore
 )
