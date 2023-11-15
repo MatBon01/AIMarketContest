@@ -1,5 +1,5 @@
 import pathlib
-from typing import Union
+from typing import Final, Union
 
 import typer
 from ray.rllib.agents.trainer import Trainer
@@ -20,6 +20,9 @@ from ai_market_contest.training.sequential_agent_name_maker import (
     SequentialAgentNameMaker,
 )
 from ai_market_contest.training.training_regime.training_regime import TrainingRegime
+
+# Assumes agent to train is always first in the list
+MAIN_AGENT_INDEX: Final = 0
 
 
 class CustomAgentTrainingRegime(TrainingRegime):
@@ -69,7 +72,7 @@ class CustomAgentTrainingRegime(TrainingRegime):
                 )
 
         save_new_custom_agent(
-            agents[0],
+            agents[MAIN_AGENT_INDEX],
             self.agent_version,
             self.training_msg,
             self.training_config_reader.get_config_file_path(),
@@ -111,12 +114,10 @@ class CustomAgentTrainingRegime(TrainingRegime):
 
         cumulative_profit = 0
         for _ in range(environment.simulation_length):
-            current_prices = get_agent_price_dict(agents, environment, current_prices)
-            _, rewards, _, _ = environment.step(current_prices)
-            for index, agent in enumerate(self_play_agents):
-                agent.update(rewards[environment.agents[index]], index)
-
-            cumulative_profit += rewards[environment.agents[0]]
+            profit = self._simulation_step(
+                agents, environment, current_prices, self_play_agents
+            )
+            cumulative_profit += profit
 
         return cumulative_profit
 
@@ -129,3 +130,25 @@ class CustomAgentTrainingRegime(TrainingRegime):
             current_prices[agent_name] = agent.get_initial_price()
 
         return current_prices
+
+    def _simulation_step(
+        self,
+        agents: list[Agent],
+        environment: Market,
+        current_prices: dict[str, int],
+        self_play_agents: list[Agent],
+    ) -> int:
+        current_prices = get_agent_price_dict(agents, environment, current_prices)
+        _, rewards, _, _ = environment.step(current_prices)
+        self._teach_learning_agents(self_play_agents)
+        return rewards[environment.agents[MAIN_AGENT_INDEX]]
+
+    def _teach_self_play_agents(
+        self,
+        self_play_agents: list[Agent],
+        rewards: dict[str, int],
+        environment: Market,
+    ) -> None:
+        # index can be this way as self play agents always assumed at start of the list
+        for index, agent in enumerate(self_play_agents):
+            agent.update(rewards[environment.agents[index]], index)
